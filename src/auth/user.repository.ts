@@ -2,6 +2,10 @@ import { EntityRepository, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { SignupDto } from './dto/signup.dto';
 import { User } from './user.entity';
+import {
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
@@ -15,8 +19,14 @@ export class UserRepository extends Repository<User> {
     user.salt = salt;
     user.passwordHash = await bcrypt.hash(password, salt);
 
-    await user.save();
-
-    return user;
+    try {
+      await user.save();
+      return user;
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException(`Email Address is already registered.`);
+      }
+      throw new InternalServerErrorException();
+    }
   }
 }
