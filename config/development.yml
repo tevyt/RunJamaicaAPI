@@ -1,0 +1,8 @@
+db:
+  host: 'localhost'
+  username: 'run-jamaica'
+  password: 'run-jamaica'
+  synchronize: true
+
+jwt:
+  secret: 'secret'
