@@ -17,7 +17,7 @@ export class UserRepository extends Repository<User> {
 
     const salt = await bcrypt.genSalt();
 
-    const user: User = new User();
+    const user: User = this.create();
     user.emailAddress = emailAddress;
     user.name = name;
     user.salt = salt;
@@ -27,6 +27,7 @@ export class UserRepository extends Repository<User> {
       await user.save();
       return user;
     } catch (error) {
+      //Postgresql error code for unique key constraint violations.
       if (error.code === '23505') {
         this.logger.verbose(
           `Attempt to register taken email address ${emailAddress}`,
@@ -34,7 +35,7 @@ export class UserRepository extends Repository<User> {
         throw new ConflictException(`Email Address is already registered.`);
       }
       this.logger.error(
-        `Error logging in as ${JSON.stringify({ emailAddress, name })}`,
+        `Error with sign up ${JSON.stringify({ emailAddress, name })}`,
       );
       throw new InternalServerErrorException();
     }
