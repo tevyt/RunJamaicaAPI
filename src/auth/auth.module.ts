@@ -19,6 +19,6 @@ const jwtExpiresIn = process.env.JWT_EXPIRES_IN || jwtConfig.expiresIn;
     TypeOrmModule.forFeature([UserRepository]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserRepository],
+  providers: [AuthService],
 })
 export class AuthModule {}
