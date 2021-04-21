@@ -33,4 +33,5 @@ export class AuthService {
       expiresIn: '365d',
     });
     return { accessToken, refreshToken };
+  }
 }
