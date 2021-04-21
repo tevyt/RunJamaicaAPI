@@ -29,6 +29,7 @@ export class UserRepository extends Repository<User> {
     } catch (error) {
       //Postgresql error code for unique key constraint violations.
       if (error.code === '23505') {
+
         this.logger.log(
           `Attempt to register taken email address ${emailAddress}`,
         );
@@ -39,7 +40,6 @@ export class UserRepository extends Repository<User> {
           error.message
         }`,
       );
-
       throw new InternalServerErrorException();
     }
   }
