@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AuthService } from '../auth.service';
 import { SignupDto } from '../dto/signup.dto';
+import { TokenType } from '../token-type.enum';
 import { User } from '../user.entity';
 
 class MockUserRepository {
@@ -37,17 +38,23 @@ describe('AuthService', () => {
   });
 
   describe('signup', () => {
-    it('returns a signed JWT with users info in the payload', async () => {
+    it('returns a signed JWT access token and refresh token', async () => {
       const signupDto: SignupDto = {
         name: 'test',
         emailAddress: 'test@example.com',
         password: 'test',
       };
-      const { accessToken } = await authService.signup(signupDto);
-      const decodedJwt = jwtService.decode(accessToken) as any;
+      const { accessToken, refreshToken } = await authService.signup(signupDto);
+      const decodedAccessToken = jwtService.decode(accessToken) as any;
 
-      expect(decodedJwt.name).toEqual(signupDto.name);
-      expect(decodedJwt.emailAddress).toEqual(signupDto.emailAddress);
+      expect(decodedAccessToken.name).toEqual(signupDto.name);
+      expect(decodedAccessToken.emailAddress).toEqual(signupDto.emailAddress);
+      expect(decodedAccessToken.type).toEqual(TokenType.ACCESS);
+
+      const decodedRefreshToken = jwtService.decode(refreshToken) as any;
+      expect(decodedRefreshToken.name).toEqual(signupDto.name);
+      expect(decodedRefreshToken.emailAddress).toEqual(signupDto.emailAddress);
+      expect(decodedRefreshToken.type).toEqual(TokenType.REFRESH);
     });
   });
 });

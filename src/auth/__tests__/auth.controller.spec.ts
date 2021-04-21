@@ -4,8 +4,10 @@ import { AuthController } from '../auth.controller';
 import { SignupDto } from '../dto/signup.dto';
 
 class AuthServiceMock {
-  async signup(_signupDto: SignupDto): Promise<{ accessToken: string }> {
-    return { accessToken: 'test' };
+  async signup(
+    _signupDto: SignupDto,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    return { accessToken: 'test', refreshToken: 'test' };
   }
 }
 
@@ -31,7 +33,7 @@ describe('AuthController', () => {
     };
 
     it('returns the access token', async () => {
-      const result = { accessToken: 'test' };
+      const result = { accessToken: 'test', refreshToken: 'test' };
       const responseBody = await authController.signup(signupDto);
       expect(responseBody).toEqual(result);
     });

@@ -29,13 +29,16 @@ export class UserRepository extends Repository<User> {
     } catch (error) {
       //Postgresql error code for unique key constraint violations.
       if (error.code === '23505') {
-        this.logger.verbose(
+
+        this.logger.log(
           `Attempt to register taken email address ${emailAddress}`,
         );
         throw new ConflictException(`Email Address is already registered.`);
       }
       this.logger.error(
-        `Error with sign up ${JSON.stringify({ emailAddress, name })}`,
+        `Error with sign up ${JSON.stringify({ emailAddress, name })} - ${
+          error.message
+        }`,
       );
       throw new InternalServerErrorException();
     }
