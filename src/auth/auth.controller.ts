@@ -10,8 +10,8 @@ export class AuthController {
   @Post('/signup')
   async signup(
     @Body(ValidationPipe) signupDto: SignupDto,
-  ): Promise<{ accessToken: string }> {
-    this.logger.verbose(
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    this.logger.log(
       `Sign up request for ${JSON.stringify({
         emailAddress: signupDto.emailAddress,
         name: signupDto.name,
@@ -19,7 +19,7 @@ export class AuthController {
     );
     const authServiceResponse = await this.authService.signup(signupDto);
 
-    this.logger.verbose(
+    this.logger.log(
       `Successful signup from ${JSON.stringify({
         emailAddress: signupDto.emailAddress,
         name: signupDto.name,

@@ -7,4 +7,4 @@ db:
   database: 'run-jamaica'
 
 jwt:
-  expiresIn: 360000
+  expiresIn: '15m'
