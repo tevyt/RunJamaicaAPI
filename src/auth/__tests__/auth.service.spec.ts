@@ -1,3 +1,4 @@
+import { UnauthorizedException } from '@nestjs/common';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -76,6 +77,25 @@ describe('AuthService', () => {
         expect(decodedAccessToken.emailAddress).toEqual('test@example.com');
         expect(decodedAccessToken.name).toEqual('Test Test');
         expect(decodedAccessToken.type).toEqual(TokenType.ACCESS);
+      });
+
+      it('returns 401 given an access token', async () => {
+        const accessTokenPayload: JwtPayload = {
+          type: TokenType.ACCESS,
+          name: 'Test Test',
+          emailAddress: 'test@example.com',
+        };
+        const accessToken = jwtService.sign(accessTokenPayload);
+        await expect(
+          authService.refreshCredentials({ refreshToken: accessToken }),
+        ).rejects.toThrow(UnauthorizedException);
+      });
+
+      it('returns 401 for an invalid refresh token', async () => {
+        const invalidToken = 'test';
+        await expect(
+          authService.refreshCredentials({ refreshToken: invalidToken }),
+        ).rejects.toThrow(UnauthorizedException);
       });
     });
   });

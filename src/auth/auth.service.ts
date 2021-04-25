@@ -41,9 +41,19 @@ export class AuthService {
     refreshCredentialsDto: RefreshCredentialsDto,
   ): Promise<{ accessToken: string }> {
     const { refreshToken } = refreshCredentialsDto;
-    const decodedJwt = await this.jwtService.verifyAsync<JwtPayload>(
-      refreshToken,
-    );
+
+    const invalidRefreshTokenErrorMessage = 'Invalid refresh token provided.';
+
+    let decodedJwt: JwtPayload;
+
+    try {
+      decodedJwt = await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
+    } catch (error) {
+      this.logger.log(
+        `Attempt to use invalid JWT for refresh - ${error.message}`,
+      );
+      throw new UnauthorizedException(invalidRefreshTokenErrorMessage);
+    }
 
     if (decodedJwt.type == TokenType.REFRESH) {
       const accessTokenPayload: JwtPayload = {
@@ -54,8 +64,8 @@ export class AuthService {
       const accessToken = await this.jwtService.signAsync(accessTokenPayload);
       return { accessToken };
     } else {
-      this.logger.log('Invalid refresh token provided.');
-      throw new UnauthorizedException(`Invalid refresh token.`);
+      this.logger.log('Attempt to use access token as refresh token.');
+      throw new UnauthorizedException(invalidRefreshTokenErrorMessage);
     }
   }
 }
