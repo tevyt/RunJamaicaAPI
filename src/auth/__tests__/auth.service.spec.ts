@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AuthService } from '../auth.service';
 import { SignupDto } from '../dto/signup.dto';
+import { JwtPayload } from '../jwt-payload.interface';
 import { TokenType } from '../token-type.enum';
 import { User } from '../user.entity';
 
@@ -55,6 +56,27 @@ describe('AuthService', () => {
       expect(decodedRefreshToken.name).toEqual(signupDto.name);
       expect(decodedRefreshToken.emailAddress).toEqual(signupDto.emailAddress);
       expect(decodedRefreshToken.type).toEqual(TokenType.REFRESH);
+    });
+
+    describe('refreshCredentials', () => {
+      it('returns a new access token given a valid refresh token', async () => {
+        const refreshTokenPayload: JwtPayload = {
+          type: TokenType.REFRESH,
+          name: 'Test Test',
+          emailAddress: 'test@example.com',
+        };
+        const refreshToken = jwtService.sign(refreshTokenPayload);
+
+        const { accessToken } = await authService.refreshCredentials({
+          refreshToken,
+        });
+
+        const decodedAccessToken = jwtService.decode(accessToken) as JwtPayload;
+
+        expect(decodedAccessToken.emailAddress).toEqual('test@example.com');
+        expect(decodedAccessToken.name).toEqual('Test Test');
+        expect(decodedAccessToken.type).toEqual(TokenType.ACCESS);
+      });
     });
   });
 });
