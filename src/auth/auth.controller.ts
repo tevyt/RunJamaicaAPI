@@ -1,5 +1,6 @@
 import { Body, Controller, Logger, Post, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { RefreshCredentialsDto } from './dto/refesh-credentials.dto';
 import { SignupDto } from './dto/signup.dto';
 
 @Controller('auth')
@@ -26,5 +27,12 @@ export class AuthController {
       })}`,
     );
     return authServiceResponse;
+  }
+
+  @Post('/refresh')
+  async refreshCredentials(
+    @Body(ValidationPipe) refreshCredentialsDto: RefreshCredentialsDto,
+  ): Promise<{ accessToken: string }> {
+    return await this.authService.refreshCredentials(refreshCredentialsDto);
   }
 }

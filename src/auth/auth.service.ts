@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { RefreshCredentialsDto } from './dto/refesh-credentials.dto';
 import { SignupDto } from './dto/signup.dto';
 import { JwtPayload } from './jwt-payload.interface';
 import { TokenType } from './token-type.enum';
@@ -8,6 +9,7 @@ import { UserRepository } from './user.repository';
 
 @Injectable()
 export class AuthService {
+  private logger: Logger = new Logger('AuthService');
   constructor(
     private jwtService: JwtService,
     @InjectRepository(UserRepository) private userRepository: UserRepository,
@@ -33,5 +35,37 @@ export class AuthService {
       expiresIn: '365d',
     });
     return { accessToken, refreshToken };
+  }
+
+  async refreshCredentials(
+    refreshCredentialsDto: RefreshCredentialsDto,
+  ): Promise<{ accessToken: string }> {
+    const { refreshToken } = refreshCredentialsDto;
+
+    const invalidRefreshTokenErrorMessage = 'Invalid refresh token provided.';
+
+    let decodedJwt: JwtPayload;
+
+    try {
+      decodedJwt = await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
+    } catch (error) {
+      this.logger.log(
+        `Attempt to use invalid JWT for refresh - ${error.message}`,
+      );
+      throw new UnauthorizedException(invalidRefreshTokenErrorMessage);
+    }
+
+    if (decodedJwt.type == TokenType.REFRESH) {
+      const accessTokenPayload: JwtPayload = {
+        emailAddress: decodedJwt.emailAddress,
+        name: decodedJwt.name,
+        type: TokenType.ACCESS,
+      };
+      const accessToken = await this.jwtService.signAsync(accessTokenPayload);
+      return { accessToken };
+    } else {
+      this.logger.log('Attempt to use access token as refresh token.');
+      throw new UnauthorizedException(invalidRefreshTokenErrorMessage);
+    }
   }
 }

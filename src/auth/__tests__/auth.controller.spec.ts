@@ -2,12 +2,19 @@ import { Test } from '@nestjs/testing';
 import { AuthService } from '../auth.service';
 import { AuthController } from '../auth.controller';
 import { SignupDto } from '../dto/signup.dto';
+import { RefreshCredentialsDto } from '../dto/refesh-credentials.dto';
 
 class AuthServiceMock {
   async signup(
     _signupDto: SignupDto,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     return { accessToken: 'test', refreshToken: 'test' };
+  }
+
+  async refreshCredentials(
+    _refreshCredentialsDto: RefreshCredentialsDto,
+  ): Promise<{ accessToken: string }> {
+    return { accessToken: 'test' };
   }
 }
 
@@ -36,6 +43,16 @@ describe('AuthController', () => {
       const result = { accessToken: 'test', refreshToken: 'test' };
       const responseBody = await authController.signup(signupDto);
       expect(responseBody).toEqual(result);
+    });
+  });
+
+  describe('refreshCredentials', () => {
+    it('returns a new refresh token given valid credentials', async () => {
+      const { accessToken } = await authController.refreshCredentials({
+        refreshToken: 'test',
+      });
+
+      expect(accessToken).toEqual('test');
     });
   });
 });
