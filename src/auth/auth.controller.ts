@@ -1,9 +1,24 @@
-import { Body, Controller, Logger, Post, ValidationPipe } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Logger,
+  Post,
+  ValidationPipe,
+} from '@nestjs/common';
+import {
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RefreshCredentialsDto } from './dto/refesh-credentials.dto';
+import { AccessTokenDto } from './dto/access-token.dto';
+import { RefreshCredentialsDto } from './dto/refesh-token.dto';
 import { SignupDto } from './dto/signup.dto';
-import { UserTokens } from './dto/userTokens.dto';
+import { UserTokensDto } from './dto/user-tokens.dto';
 
 @Controller('auth')
 @ApiTags('auth')
@@ -11,13 +26,19 @@ export class AuthController {
   private logger = new Logger('AuthController');
   constructor(private authService: AuthService) {}
 
-  @Post('/signup')
   @ApiOperation({
     summary: `Creates user and returns an access token and a refresh token. Both tokens contain user information.`,
   })
+  @ApiCreatedResponse({
+    description: 'User created successfully.',
+    type: UserTokensDto,
+  })
+  @ApiConflictResponse({ description: 'User email address already registed.' })
+  @Post('/signup')
+  @HttpCode(201)
   async signup(
     @Body(ValidationPipe) signupDto: SignupDto,
-  ): Promise<UserTokens> {
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     this.logger.log(
       `Sign up request for ${JSON.stringify({
         emailAddress: signupDto.emailAddress,
@@ -35,10 +56,19 @@ export class AuthController {
     return authServiceResponse;
   }
 
+  @ApiOperation({
+    summary: 'Generate a new access token given a refresh token.',
+  })
+  @ApiOkResponse({
+    description: 'New access token generated',
+    type: AccessTokenDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid refresh token provided.' })
   @Post('/refresh')
+  @HttpCode(200)
   async refreshCredentials(
     @Body(ValidationPipe) refreshCredentialsDto: RefreshCredentialsDto,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<AccessTokenDto> {
     return await this.authService.refreshCredentials(refreshCredentialsDto);
   }
 }

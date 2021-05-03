@@ -4,9 +4,9 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AuthService } from '../auth.service';
 import { SignupDto } from '../dto/signup.dto';
-import { JwtPayload } from '../jwt-payload.interface';
-import { TokenType } from '../token-type.enum';
-import { User } from '../user.entity';
+import { JwtPayload } from '../types/jwt-payload.interface';
+import { TokenType } from '../types/token-type.enum';
+import { User } from '../entities/user.entity';
 
 class MockUserRepository {
   async signup(signupDto: SignupDto): Promise<User> {

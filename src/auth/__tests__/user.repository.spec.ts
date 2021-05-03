@@ -1,5 +1,5 @@
 import { SignupDto } from '../dto/signup.dto';
-import { User } from '../user.entity';
+import { User } from '../entities/user.entity';
 import { UserRepository } from '../user.repository';
 import * as bcrypt from 'bcrypt';
 import {
