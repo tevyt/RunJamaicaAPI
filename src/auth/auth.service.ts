@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RefreshCredentialsDto } from './dto/refesh-credentials.dto';
 import { SignupDto } from './dto/signup.dto';
+import { UserTokens } from './dto/userTokens.dto';
 import { JwtPayload } from './jwt-payload.interface';
 import { TokenType } from './token-type.enum';
 import { UserRepository } from './user.repository';
@@ -14,9 +15,7 @@ export class AuthService {
     private jwtService: JwtService,
     @InjectRepository(UserRepository) private userRepository: UserRepository,
   ) {}
-  async signup(
-    signupDto: SignupDto,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  async signup(signupDto: SignupDto): Promise<UserTokens> {
     const user = await this.userRepository.signup(signupDto);
 
     const accessTokenPayload: JwtPayload = {
