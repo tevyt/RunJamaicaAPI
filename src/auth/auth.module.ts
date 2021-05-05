@@ -4,17 +4,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UserRepository } from './user.repository';
-import * as config from 'config';
+import { JwtConfig } from '../config/jwt.config';
 
-const jwtConfig = config.get('jwt');
-const jwtSecret = process.env.JWT_SECRET || jwtConfig.secret;
-const jwtExpiresIn = process.env.JWT_EXPIRES_IN || jwtConfig.expiresIn;
+const {
+  accessTokenSecret,
+  accessTokenExpiresIn,
+} = new JwtConfig().config.mapping;
 
 @Module({
   imports: [
     JwtModule.register({
-      secret: jwtSecret,
-      signOptions: { expiresIn: jwtExpiresIn },
+      secret: accessTokenSecret,
+      signOptions: { expiresIn: accessTokenExpiresIn },
     }),
     TypeOrmModule.forFeature([UserRepository]),
   ],

@@ -8,14 +8,19 @@ import { UserTokensDto } from './dto/user-tokens.dto';
 import { JwtPayload } from './types/jwt-payload.interface';
 import { TokenType } from './types/token-type.enum';
 import { UserRepository } from './user.repository';
+import { JwtConfig } from '../config/jwt.config';
 
 @Injectable()
 export class AuthService {
   private logger: Logger = new Logger('AuthService');
+
+  private jwtConfig = new JwtConfig();
+
   constructor(
     private jwtService: JwtService,
     @InjectRepository(UserRepository) private userRepository: UserRepository,
   ) {}
+
   async signup(signupDto: SignupDto): Promise<UserTokensDto> {
     const user = await this.userRepository.signup(signupDto);
 
@@ -32,7 +37,8 @@ export class AuthService {
 
     const accessToken = await this.jwtService.sign(accessTokenPayload);
     const refreshToken = await this.jwtService.sign(refreshTokenPayload, {
-      expiresIn: '365d',
+      secret: this.jwtConfig.config.mapping.accessTokenSecret,
+      expiresIn: this.jwtConfig.config.mapping.accessTokenExpiresIn,
     });
     return { accessToken, refreshToken };
   }
@@ -47,7 +53,9 @@ export class AuthService {
     let decodedJwt: JwtPayload;
 
     try {
-      decodedJwt = await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
+      decodedJwt = await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
+        secret: this.jwtConfig.config.mapping.refreshTokenSecret,
+      });
     } catch (error) {
       this.logger.log(
         `Attempt to use invalid JWT for refresh - ${error.message}`,

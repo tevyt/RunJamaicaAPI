@@ -3,8 +3,8 @@ server:
 
 db:
   type: 'postgres'
-  port: 5432
   database: 'run-jamaica'
 
 jwt:
-  expiresIn: '15m'
+  accessTokenExpiresIn: '15m'
+  refreshTokenExpiresIn: '1y'

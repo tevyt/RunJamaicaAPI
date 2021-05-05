@@ -1,8 +1,10 @@
 db:
   host: 'localhost'
+  port: 5432
   username: 'run-jamaica'
   password: 'run-jamaica'
   synchronize: true
 
 jwt:
-  secret: 'secret'
+  accessTokenSecret: 'secret'
+  refreshTokenSecret: 'secret'
