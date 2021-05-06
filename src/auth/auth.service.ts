@@ -1,22 +1,27 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RefreshCredentialsDto } from './dto/refesh-credentials.dto';
+import { AccessTokenDto } from './dto/access-token.dto';
+import { RefreshCredentialsDto } from './dto/refesh-token.dto';
 import { SignupDto } from './dto/signup.dto';
-import { JwtPayload } from './jwt-payload.interface';
-import { TokenType } from './token-type.enum';
+import { UserTokensDto } from './dto/user-tokens.dto';
+import { JwtPayload } from './types/jwt-payload.interface';
+import { TokenType } from './types/token-type.enum';
 import { UserRepository } from './user.repository';
+import { JwtConfig } from '../config/jwt.config';
 
 @Injectable()
 export class AuthService {
   private logger: Logger = new Logger('AuthService');
+
+  private jwtConfig = new JwtConfig();
+
   constructor(
     private jwtService: JwtService,
     @InjectRepository(UserRepository) private userRepository: UserRepository,
   ) {}
-  async signup(
-    signupDto: SignupDto,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+
+  async signup(signupDto: SignupDto): Promise<UserTokensDto> {
     const user = await this.userRepository.signup(signupDto);
 
     const accessTokenPayload: JwtPayload = {
@@ -32,14 +37,15 @@ export class AuthService {
 
     const accessToken = await this.jwtService.sign(accessTokenPayload);
     const refreshToken = await this.jwtService.sign(refreshTokenPayload, {
-      expiresIn: '365d',
+      secret: this.jwtConfig.config.mapping.accessTokenSecret,
+      expiresIn: this.jwtConfig.config.mapping.accessTokenExpiresIn,
     });
     return { accessToken, refreshToken };
   }
 
   async refreshCredentials(
     refreshCredentialsDto: RefreshCredentialsDto,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<AccessTokenDto> {
     const { refreshToken } = refreshCredentialsDto;
 
     const invalidRefreshTokenErrorMessage = 'Invalid refresh token provided.';
@@ -47,7 +53,9 @@ export class AuthService {
     let decodedJwt: JwtPayload;
 
     try {
-      decodedJwt = await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
+      decodedJwt = await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
+        secret: this.jwtConfig.config.mapping.refreshTokenSecret,
+      });
     } catch (error) {
       this.logger.log(
         `Attempt to use invalid JWT for refresh - ${error.message}`,
