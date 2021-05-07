@@ -9,6 +9,7 @@ import { JwtPayload } from './types/jwt-payload.interface';
 import { TokenType } from './types/token-type.enum';
 import { UserRepository } from './user.repository';
 import { JwtConfig } from '../config/jwt.config';
+import { CredentialsDto } from './dto/credentials.dto';
 
 @Injectable()
 export class AuthService {
@@ -24,23 +25,7 @@ export class AuthService {
   async signup(signupDto: SignupDto): Promise<UserTokensDto> {
     const user = await this.userRepository.signup(signupDto);
 
-    const accessTokenPayload: JwtPayload = {
-      emailAddress: user.emailAddress,
-      name: user.name,
-      type: TokenType.ACCESS,
-    };
-
-    const refreshTokenPayload: JwtPayload = {
-      ...accessTokenPayload,
-      type: TokenType.REFRESH,
-    };
-
-    const accessToken = await this.jwtService.sign(accessTokenPayload);
-    const refreshToken = await this.jwtService.sign(refreshTokenPayload, {
-      secret: this.jwtConfig.config.mapping.accessTokenSecret,
-      expiresIn: this.jwtConfig.config.mapping.accessTokenExpiresIn,
-    });
-    return { accessToken, refreshToken };
+    return this.signUserTokens(user.emailAddress, user.name);
   }
 
   async refreshCredentials(
@@ -75,5 +60,37 @@ export class AuthService {
       this.logger.log('Attempt to use access token as refresh token.');
       throw new UnauthorizedException(invalidRefreshTokenErrorMessage);
     }
+  }
+
+  async signin(credentialsDto: CredentialsDto): Promise<UserTokensDto> {
+    const user = await this.userRepository.signin(credentialsDto);
+    if (user) {
+      return this.signUserTokens(user.emailAddress, user.name);
+    }
+
+    throw new UnauthorizedException('Invalid email address or password.');
+  }
+
+  private async signUserTokens(
+    emailAddress: string,
+    name: string,
+  ): Promise<UserTokensDto> {
+    const accessTokenPayload: JwtPayload = {
+      emailAddress,
+      name,
+      type: TokenType.ACCESS,
+    };
+
+    const refreshTokenPayload: JwtPayload = {
+      ...accessTokenPayload,
+      type: TokenType.REFRESH,
+    };
+
+    const accessToken = await this.jwtService.sign(accessTokenPayload);
+    const refreshToken = await this.jwtService.sign(refreshTokenPayload, {
+      secret: this.jwtConfig.config.mapping.accessTokenSecret,
+      expiresIn: this.jwtConfig.config.mapping.accessTokenExpiresIn,
+    });
+    return { accessToken, refreshToken };
   }
 }

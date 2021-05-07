@@ -7,6 +7,12 @@ import { SignupDto } from '../dto/signup.dto';
 import { JwtPayload } from '../types/jwt-payload.interface';
 import { TokenType } from '../types/token-type.enum';
 import { User } from '../entities/user.entity';
+import { CredentialsDto } from '../dto/credentials.dto';
+import { userInfo } from 'node:os';
+
+const existingUserEmailAddress = 'test@example.com';
+const existingUserName = 'Test User';
+const existingUserPassword = 'password123';
 
 class MockUserRepository {
   async signup(signupDto: SignupDto): Promise<User> {
@@ -15,6 +21,20 @@ class MockUserRepository {
     user.name = signupDto.name;
 
     return user;
+  }
+
+  async signin(credentialsDto: CredentialsDto): Promise<User | undefined> {
+    const { emailAddress, password } = credentialsDto;
+
+    if (
+      emailAddress === existingUserEmailAddress &&
+      password === existingUserPassword
+    ) {
+      const user = new User();
+      user.emailAddress = existingUserEmailAddress;
+      user.name = existingUserName;
+      return user;
+    }
   }
 }
 
@@ -97,6 +117,25 @@ describe('AuthService', () => {
           authService.refreshCredentials({ refreshToken: invalidToken }),
         ).rejects.toThrow(UnauthorizedException);
       });
+    });
+  });
+
+  describe('signin', () => {
+    it('returns user tokens if credentials match an existing user', async () => {
+      const { accessToken, refreshToken } = await authService.signin({
+        emailAddress: existingUserEmailAddress,
+        password: existingUserPassword,
+      });
+
+      const { emailAddress: accessTokenEmailAddress } = jwtService.decode(
+        accessToken,
+      ) as JwtPayload;
+      const { emailAddress: refreshTokenEmailAddress } = jwtService.decode(
+        refreshToken,
+      ) as JwtPayload;
+
+      expect(accessTokenEmailAddress).toEqual(existingUserEmailAddress);
+      expect(refreshTokenEmailAddress).toEqual(existingUserEmailAddress);
     });
   });
 });

@@ -7,6 +7,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
+import { CredentialsDto } from './dto/credentials.dto';
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
@@ -40,6 +41,18 @@ export class UserRepository extends Repository<User> {
         }`,
       );
       throw new InternalServerErrorException();
+    }
+  }
+
+  async signin(credentialsDto: CredentialsDto): Promise<User> {
+    const { emailAddress, password } = credentialsDto;
+
+    const user = await this.findOne({ emailAddress });
+
+    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+
+    if (passwordMatch) {
+      return user;
     }
   }
 }

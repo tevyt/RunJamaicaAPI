@@ -16,6 +16,10 @@ class AuthServiceMock {
   ): Promise<AccessTokenDto> {
     return { accessToken: 'test' };
   }
+
+  async signin(_credentialsDto: Credential): Promise<UserTokensDto> {
+    return { accessToken: 'test', refreshToken: 'test' };
+  }
 }
 
 describe('AuthController', () => {
@@ -56,6 +60,18 @@ describe('AuthController', () => {
       });
 
       expect(accessToken).toEqual('test');
+    });
+  });
+
+  describe('signin', () => {
+    it('returns a set of user tokens', async () => {
+      const { accessToken, refreshToken } = await authController.signIn({
+        emailAddress: 'test@example.com',
+        password: 'password123',
+      });
+
+      expect(accessToken).toEqual('test');
+      expect(refreshToken).toEqual('test');
     });
   });
 });
