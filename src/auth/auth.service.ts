@@ -68,19 +68,22 @@ export class AuthService {
   }
 
   async signin(credentialsDto: CredentialsDto): Promise<UserTokensDto> {
-    try {
-      const user = await this.userRepository.signin(credentialsDto);
-      if (user) {
-        return this.signUserTokens(user.emailAddress, user.name);
-      }
+    let user;
 
-      throw new UnauthorizedException('Invalid email address or password.');
+    try {
+      user = await this.userRepository.signin(credentialsDto);
     } catch (error) {
       this.logger.error(
         `An error occured when trying to sign in user: ${credentialsDto.emailAddress} - ${error.message}`,
       );
       throw new InternalServerErrorException();
     }
+
+    if (user) {
+      return this.signUserTokens(user.emailAddress, user.name);
+    }
+
+    throw new UnauthorizedException('Invalid email address or password.');
   }
 
   private async signUserTokens(
