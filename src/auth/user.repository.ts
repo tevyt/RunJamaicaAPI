@@ -49,10 +49,16 @@ export class UserRepository extends Repository<User> {
 
     const user = await this.findOne({ emailAddress });
 
+    if (!user) {
+      return null;
+    }
+
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
 
     if (passwordMatch) {
       return user;
+    } else {
+      return null;
     }
   }
 }

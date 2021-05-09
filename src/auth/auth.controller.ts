@@ -20,7 +20,6 @@ import { CredentialsDto } from './dto/credentials.dto';
 import { RefreshCredentialsDto } from './dto/refesh-token.dto';
 import { SignupDto } from './dto/signup.dto';
 import { UserTokensDto } from './dto/user-tokens.dto';
-import { User } from './entities/user.entity';
 
 @Controller('auth')
 @ApiTags('auth')

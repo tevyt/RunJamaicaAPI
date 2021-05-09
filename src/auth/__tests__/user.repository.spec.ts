@@ -8,10 +8,10 @@ import {
 } from '@nestjs/common';
 
 describe('UserRepository', () => {
-  describe('signup', () => {
-    let mockUserEntity: User;
-    let userRepository: UserRepository;
+  let mockUserEntity: User;
+  let userRepository: UserRepository;
 
+  describe('signup', () => {
     const signupDto: SignupDto = {
       name: 'test',
       emailAddress: 'test@example.com',
@@ -60,6 +60,54 @@ describe('UserRepository', () => {
       await expect(userRepository.signup(signupDto)).rejects.toThrow(
         InternalServerErrorException,
       );
+    });
+  });
+
+  describe('signin', () => {
+    let user: User;
+    beforeEach(() => {
+      userRepository.findOne = jest
+        .fn()
+        .mockImplementationOnce(({ emailAddress }) => {
+          if (emailAddress === 'test@example.com') {
+            const salt = bcrypt.genSaltSync();
+
+            user = new User();
+            user.id = 1;
+            user.emailAddress = 'test@example.com';
+            user.name = 'Test User';
+            user.salt = salt;
+            user.passwordHash = bcrypt.hashSync('password123', salt);
+            return user;
+          }
+          return null;
+        });
+    });
+    it('returns a user when a matching email and password are provided', async () => {
+      const { id } = await userRepository.signin({
+        emailAddress: 'test@example.com',
+        password: 'password123',
+      });
+
+      expect(id).toEqual(user.id);
+    });
+
+    it('returns null if an incorrect password is provided', async () => {
+      const result = await userRepository.signin({
+        emailAddress: 'test@example.com',
+        password: 'password',
+      });
+
+      expect(result).toBeNull();
+    });
+
+    it('returns null if the user does not exist', async () => {
+      const result = await userRepository.signin({
+        emailAddress: 'test@example.net',
+        password: 'password123',
+      });
+
+      expect(result).toBeNull();
     });
   });
 });
