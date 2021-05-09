@@ -88,6 +88,9 @@ export class AuthController {
   async signIn(
     @Body(ValidationPipe) credentialsDto: CredentialsDto,
   ): Promise<UserTokensDto> {
-    return await this.authService.signin(credentialsDto);
+    this.logger.log(`Request to sign in as: ${credentialsDto.emailAddress}`);
+    const userTokens = await this.authService.signin(credentialsDto);
+    this.logger.log(`Successful sign in as ${credentialsDto.emailAddress}`);
+    return userTokens;
   }
 }

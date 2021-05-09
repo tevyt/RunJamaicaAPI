@@ -50,6 +50,7 @@ export class UserRepository extends Repository<User> {
     const user = await this.findOne({ emailAddress });
 
     if (!user) {
+      this.logger.log(`No user found with email address: ${emailAddress}`);
       return null;
     }
 
@@ -58,6 +59,7 @@ export class UserRepository extends Repository<User> {
     if (passwordMatch) {
       return user;
     } else {
+      this.logger.log(`Password did not match for ${emailAddress}`);
       return null;
     }
   }

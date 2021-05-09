@@ -1,4 +1,7 @@
-import { UnauthorizedException } from '@nestjs/common';
+import {
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -9,6 +12,7 @@ import { TokenType } from '../types/token-type.enum';
 import { User } from '../entities/user.entity';
 import { CredentialsDto } from '../dto/credentials.dto';
 import { userInfo } from 'node:os';
+import { UserRepository } from '../user.repository';
 
 const existingUserEmailAddress = 'test@example.com';
 const existingUserName = 'Test User';
@@ -41,6 +45,7 @@ class MockUserRepository {
 describe('AuthService', () => {
   let authService: AuthService;
   let jwtService: JwtService;
+  let userRepository: UserRepository;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -57,6 +62,7 @@ describe('AuthService', () => {
 
     authService = moduleRef.get<AuthService>(AuthService);
     jwtService = moduleRef.get<JwtService>(JwtService);
+    userRepository = moduleRef.get<UserRepository>(UserRepository);
   });
 
   describe('signup', () => {
@@ -136,6 +142,18 @@ describe('AuthService', () => {
 
       expect(accessTokenEmailAddress).toEqual(existingUserEmailAddress);
       expect(refreshTokenEmailAddress).toEqual(existingUserEmailAddress);
+    });
+    it('throws internal server error exception if an error occurs', async () => {
+      userRepository.signin = jest.fn().mockImplementationOnce(() => {
+        throw new Error('Unable to connect to db');
+      });
+
+      await expect(
+        authService.signin({
+          emailAddress: 'test@example.com',
+          password: 'password123',
+        }),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 });

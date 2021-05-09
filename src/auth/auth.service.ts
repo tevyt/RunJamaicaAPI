@@ -1,4 +1,9 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccessTokenDto } from './dto/access-token.dto';
@@ -63,12 +68,19 @@ export class AuthService {
   }
 
   async signin(credentialsDto: CredentialsDto): Promise<UserTokensDto> {
-    const user = await this.userRepository.signin(credentialsDto);
-    if (user) {
-      return this.signUserTokens(user.emailAddress, user.name);
-    }
+    try {
+      const user = await this.userRepository.signin(credentialsDto);
+      if (user) {
+        return this.signUserTokens(user.emailAddress, user.name);
+      }
 
-    throw new UnauthorizedException('Invalid email address or password.');
+      throw new UnauthorizedException('Invalid email address or password.');
+    } catch (error) {
+      this.logger.error(
+        `An error occured when trying to sign in user: ${credentialsDto.emailAddress} - ${error.message}`,
+      );
+      throw new InternalServerErrorException();
+    }
   }
 
   private async signUserTokens(
