@@ -1,4 +1,7 @@
-import { UnauthorizedException } from '@nestjs/common';
+import {
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -7,6 +10,13 @@ import { SignupDto } from '../dto/signup.dto';
 import { JwtPayload } from '../types/jwt-payload.interface';
 import { TokenType } from '../types/token-type.enum';
 import { User } from '../entities/user.entity';
+import { CredentialsDto } from '../dto/credentials.dto';
+import { userInfo } from 'node:os';
+import { UserRepository } from '../user.repository';
+
+const existingUserEmailAddress = 'test@example.com';
+const existingUserName = 'Test User';
+const existingUserPassword = 'password123';
 
 class MockUserRepository {
   async signup(signupDto: SignupDto): Promise<User> {
@@ -16,11 +26,26 @@ class MockUserRepository {
 
     return user;
   }
+
+  async signin(credentialsDto: CredentialsDto): Promise<User | undefined> {
+    const { emailAddress, password } = credentialsDto;
+
+    if (
+      emailAddress === existingUserEmailAddress &&
+      password === existingUserPassword
+    ) {
+      const user = new User();
+      user.emailAddress = existingUserEmailAddress;
+      user.name = existingUserName;
+      return user;
+    }
+  }
 }
 
 describe('AuthService', () => {
   let authService: AuthService;
   let jwtService: JwtService;
+  let userRepository: UserRepository;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -37,6 +62,7 @@ describe('AuthService', () => {
 
     authService = moduleRef.get<AuthService>(AuthService);
     jwtService = moduleRef.get<JwtService>(JwtService);
+    userRepository = moduleRef.get<UserRepository>(UserRepository);
   });
 
   describe('signup', () => {
@@ -97,6 +123,37 @@ describe('AuthService', () => {
           authService.refreshCredentials({ refreshToken: invalidToken }),
         ).rejects.toThrow(UnauthorizedException);
       });
+    });
+  });
+
+  describe('signin', () => {
+    it('returns user tokens if credentials match an existing user', async () => {
+      const { accessToken, refreshToken } = await authService.signin({
+        emailAddress: existingUserEmailAddress,
+        password: existingUserPassword,
+      });
+
+      const { emailAddress: accessTokenEmailAddress } = jwtService.decode(
+        accessToken,
+      ) as JwtPayload;
+      const { emailAddress: refreshTokenEmailAddress } = jwtService.decode(
+        refreshToken,
+      ) as JwtPayload;
+
+      expect(accessTokenEmailAddress).toEqual(existingUserEmailAddress);
+      expect(refreshTokenEmailAddress).toEqual(existingUserEmailAddress);
+    });
+    it('throws internal server error exception if an error occurs', async () => {
+      userRepository.signin = jest.fn().mockImplementationOnce(() => {
+        throw new Error('Unable to connect to db');
+      });
+
+      await expect(
+        authService.signin({
+          emailAddress: 'test@example.com',
+          password: 'password123',
+        }),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 });

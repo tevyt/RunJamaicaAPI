@@ -16,6 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AccessTokenDto } from './dto/access-token.dto';
+import { CredentialsDto } from './dto/credentials.dto';
 import { RefreshCredentialsDto } from './dto/refesh-token.dto';
 import { SignupDto } from './dto/signup.dto';
 import { UserTokensDto } from './dto/user-tokens.dto';
@@ -70,5 +71,26 @@ export class AuthController {
     @Body(ValidationPipe) refreshCredentialsDto: RefreshCredentialsDto,
   ): Promise<AccessTokenDto> {
     return await this.authService.refreshCredentials(refreshCredentialsDto);
+  }
+
+  @ApiOperation({
+    summary: 'User signs in with credentials',
+  })
+  @ApiOkResponse({
+    description: 'User sign in successful',
+    type: UserTokensDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Invalid email address or password',
+  })
+  @Post('/signin')
+  @HttpCode(200)
+  async signIn(
+    @Body(ValidationPipe) credentialsDto: CredentialsDto,
+  ): Promise<UserTokensDto> {
+    this.logger.log(`Request to sign in as: ${credentialsDto.emailAddress}`);
+    const userTokens = await this.authService.signin(credentialsDto);
+    this.logger.log(`Successful sign in as ${credentialsDto.emailAddress}`);
+    return userTokens;
   }
 }

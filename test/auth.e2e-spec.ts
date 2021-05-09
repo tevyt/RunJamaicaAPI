@@ -108,6 +108,46 @@ describe('AuthController (e2e)', () => {
     });
   });
 
+  describe('/auth/signin (POST)', () => {
+    beforeEach(async () => {
+      await userRepository.signup({
+        name: 'Test User',
+        emailAddress: 'test@example.com',
+        password: 'password123',
+      });
+    });
+
+    it('returns a new pair of access tokens when correct credentials are provided', (done) => {
+      return request(app.getHttpServer())
+        .post('/auth/signin')
+        .send({ emailAddress: 'test@example.com', password: 'password123' })
+        .expect((res) => {
+          const { accessToken, refreshToken } = res.body;
+          expect(accessToken).toBeDefined();
+          expect(refreshToken).toBeDefined();
+        })
+        .expect(200, done);
+    });
+
+    it('returns a 401 response if an incorrect password is provided', (done) => {
+      return request(app.getHttpServer())
+        .post('/auth/signin')
+        .send({ emailAddress: 'test@example.com', password: 'password122' })
+        .expect(401, done);
+    });
+
+    it('returns a 401 response when the user does not exist', (done) => {
+      return request(app.getHttpServer())
+        .post('/auth/signin')
+        .send({ emailAddress: 'test@example.net', password: 'password123' })
+        .expect(401, done);
+    });
+
+    afterEach(async () => {
+      await userRepository.delete({ emailAddress: 'test@example.com' });
+    });
+  });
+
   afterEach(async () => {
     await app.close();
   });
