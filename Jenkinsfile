@@ -2,6 +2,9 @@ pipeline {
   agent any
   
   stages {
+    stage('Smoke'){
+      echo 'Smoke'
+    }
     stage('Install dependencies') {
       steps {
         npm install
