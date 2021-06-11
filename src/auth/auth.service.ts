@@ -15,6 +15,7 @@ import { TokenType } from './types/token-type.enum';
 import { UserRepository } from './user.repository';
 import { JwtConfig } from '../config/jwt.config';
 import { CredentialsDto } from './dto/credentials.dto';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -30,7 +31,7 @@ export class AuthService {
   async signup(signupDto: SignupDto): Promise<UserTokensDto> {
     const user = await this.userRepository.signup(signupDto);
 
-    return this.signUserTokens(user.emailAddress, user.name);
+    return this.signUserTokens(user);
   }
 
   async refreshCredentials(
@@ -56,7 +57,8 @@ export class AuthService {
     if (decodedJwt.type == TokenType.REFRESH) {
       const accessTokenPayload: JwtPayload = {
         emailAddress: decodedJwt.emailAddress,
-        name: decodedJwt.name,
+        firstName: decodedJwt.firstName,
+        lastName: decodedJwt.lastName,
         type: TokenType.ACCESS,
       };
       const accessToken = await this.jwtService.signAsync(accessTokenPayload);
@@ -80,19 +82,19 @@ export class AuthService {
     }
 
     if (user) {
-      return this.signUserTokens(user.emailAddress, user.name);
+      return this.signUserTokens(user);
     }
 
     throw new UnauthorizedException('Invalid email address or password.');
   }
 
-  private async signUserTokens(
-    emailAddress: string,
-    name: string,
-  ): Promise<UserTokensDto> {
+  private async signUserTokens(user: User): Promise<UserTokensDto> {
+    const { emailAddress, firstName, lastName } = user;
+
     const accessTokenPayload: JwtPayload = {
       emailAddress,
-      name,
+      firstName,
+      lastName,
       type: TokenType.ACCESS,
     };
 

@@ -14,13 +14,14 @@ export class UserRepository extends Repository<User> {
   private logger = new Logger('UserRepository');
 
   async signup(signUpDto: SignupDto): Promise<User> {
-    const { emailAddress, name, password } = signUpDto;
+    const { emailAddress, firstName, lastName, password } = signUpDto;
 
     const salt = await bcrypt.genSalt();
 
     const user: User = this.create();
     user.emailAddress = emailAddress;
-    user.name = name;
+    user.firstName = firstName;
+    user.lastName = lastName;
     user.salt = salt;
     user.passwordHash = await bcrypt.hash(password, salt);
 
@@ -29,16 +30,19 @@ export class UserRepository extends Repository<User> {
       return user;
     } catch (error) {
       //Postgresql error code for unique key constraint violations.
-      if (error.code === '23505') {
+      const POSTGRES_UNIQUE_CONSTRAIN_VIOLATION_ERROR_CODE = '23505';
+      if (error.code === POSTGRES_UNIQUE_CONSTRAIN_VIOLATION_ERROR_CODE) {
         this.logger.log(
           `Attempt to register taken email address ${emailAddress}`,
         );
         throw new ConflictException(`Email Address is already registered.`);
       }
       this.logger.error(
-        `Error with sign up ${JSON.stringify({ emailAddress, name })} - ${
-          error.message
-        }`,
+        `Error with sign up ${JSON.stringify({
+          emailAddress,
+          firstName,
+          lastName,
+        })} - ${error.message}`,
       );
       throw new InternalServerErrorException();
     }

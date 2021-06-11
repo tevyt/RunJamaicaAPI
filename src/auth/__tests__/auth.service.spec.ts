@@ -15,14 +15,16 @@ import { userInfo } from 'node:os';
 import { UserRepository } from '../user.repository';
 
 const existingUserEmailAddress = 'test@example.com';
-const existingUserName = 'Test User';
+const existingUserFirstName = 'Test';
+const existingUserLastName = 'User';
 const existingUserPassword = 'password123';
 
 class MockUserRepository {
   async signup(signupDto: SignupDto): Promise<User> {
     const user = new User();
     user.emailAddress = signupDto.emailAddress;
-    user.name = signupDto.name;
+    user.firstName = signupDto.firstName;
+    user.lastName = signupDto.lastName;
 
     return user;
   }
@@ -36,7 +38,8 @@ class MockUserRepository {
     ) {
       const user = new User();
       user.emailAddress = existingUserEmailAddress;
-      user.name = existingUserName;
+      user.firstName = existingUserFirstName;
+      user.lastName = existingUserLastName;
       return user;
     }
   }
@@ -68,19 +71,22 @@ describe('AuthService', () => {
   describe('signup', () => {
     it('returns a signed JWT access token and refresh token', async () => {
       const signupDto: SignupDto = {
-        name: 'test',
+        firstName: 'Test',
+        lastName: 'User',
         emailAddress: 'test@example.com',
         password: 'test',
       };
       const { accessToken, refreshToken } = await authService.signup(signupDto);
       const decodedAccessToken = jwtService.decode(accessToken) as any;
 
-      expect(decodedAccessToken.name).toEqual(signupDto.name);
+      expect(decodedAccessToken.firstName).toEqual(signupDto.firstName);
+      expect(decodedAccessToken.lastName).toEqual(signupDto.lastName);
       expect(decodedAccessToken.emailAddress).toEqual(signupDto.emailAddress);
       expect(decodedAccessToken.type).toEqual(TokenType.ACCESS);
 
       const decodedRefreshToken = jwtService.decode(refreshToken) as any;
-      expect(decodedRefreshToken.name).toEqual(signupDto.name);
+      expect(decodedRefreshToken.firstName).toEqual(signupDto.firstName);
+      expect(decodedRefreshToken.lastName).toEqual(signupDto.lastName);
       expect(decodedRefreshToken.emailAddress).toEqual(signupDto.emailAddress);
       expect(decodedRefreshToken.type).toEqual(TokenType.REFRESH);
     });
@@ -89,7 +95,8 @@ describe('AuthService', () => {
       it('returns a new access token given a valid refresh token', async () => {
         const refreshTokenPayload: JwtPayload = {
           type: TokenType.REFRESH,
-          name: 'Test Test',
+          firstName: 'Test',
+          lastName: 'User',
           emailAddress: 'test@example.com',
         };
         const refreshToken = jwtService.sign(refreshTokenPayload);
@@ -101,14 +108,16 @@ describe('AuthService', () => {
         const decodedAccessToken = jwtService.decode(accessToken) as JwtPayload;
 
         expect(decodedAccessToken.emailAddress).toEqual('test@example.com');
-        expect(decodedAccessToken.name).toEqual('Test Test');
+        expect(decodedAccessToken.firstName).toEqual('Test');
+        expect(decodedAccessToken.lastName).toEqual('User');
         expect(decodedAccessToken.type).toEqual(TokenType.ACCESS);
       });
 
       it('returns 401 given an access token', async () => {
         const accessTokenPayload: JwtPayload = {
           type: TokenType.ACCESS,
-          name: 'Test Test',
+          firstName: 'Test',
+          lastName: 'User',
           emailAddress: 'test@example.com',
         };
         const accessToken = jwtService.sign(accessTokenPayload);

@@ -43,7 +43,8 @@ export class AuthController {
     this.logger.log(
       `Sign up request for ${JSON.stringify({
         emailAddress: signupDto.emailAddress,
-        name: signupDto.name,
+        firstName: signupDto.firstName,
+        lastName: signupDto.lastName,
       })}`,
     );
     const authServiceResponse = await this.authService.signup(signupDto);
@@ -51,7 +52,8 @@ export class AuthController {
     this.logger.log(
       `Successful signup from ${JSON.stringify({
         emailAddress: signupDto.emailAddress,
-        name: signupDto.name,
+        firstName: signupDto.firstName,
+        lastName: signupDto.lastName,
       })}`,
     );
     return authServiceResponse;

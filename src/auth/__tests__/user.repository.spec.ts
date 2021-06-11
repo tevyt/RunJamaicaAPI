@@ -13,7 +13,8 @@ describe('UserRepository', () => {
 
   describe('signup', () => {
     const signupDto: SignupDto = {
-      name: 'test',
+      firstName: 'Test',
+      lastName: 'User',
       emailAddress: 'test@example.com',
       password: 'password',
     };
@@ -75,7 +76,8 @@ describe('UserRepository', () => {
             user = new User();
             user.id = 1;
             user.emailAddress = 'test@example.com';
-            user.name = 'Test User';
+            user.firstName = 'Test';
+            user.lastName = 'User';
             user.salt = salt;
             user.passwordHash = bcrypt.hashSync('password123', salt);
             return user;

@@ -16,7 +16,10 @@ export class User extends BaseEntity {
   emailAddress: string;
 
   @Column()
-  name: string;
+  firstName: string;
+
+  @Column({ nullable: true })
+  lastName?: string;
 
   @Column()
   passwordHash: string;
